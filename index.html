@@ -6,22 +6,24 @@
 <title>BadaQuiz das Escolas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&family=Baloo+2:wght@600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg-1:#0B1F3A;
-    --bg-2:#1B0F3D;
-    --ink:#F4F6FB;
-    --ink-dim:#9CA9C7;
-    --panel:#141B33;
-    --panel-border:#26305A;
-    --red:#E63950;
-    --blue:#2D5FE0;
+    --bg-1:#FFE8A3;
+    --bg-2:#FFB6D9;
+    --bg-3:#A8E6F0;
+    --ink:#3A2E5C;
+    --ink-dim:#7C6FA0;
+    --panel:#FFFFFF;
+    --panel-border:#F0DFFF;
+    --red:#FF5C7A;
+    --blue:#3FA9F5;
     --yellow:#FFC93C;
-    --green:#17B978;
-    --font-display:'Space Grotesk', sans-serif;
-    --font-body:'Inter', sans-serif;
-    --font-mono:'JetBrains Mono', monospace;
+    --green:#3DD68C;
+    --purple:#B072E8;
+    --font-display:'Fredoka', sans-serif;
+    --font-body:'Nunito', sans-serif;
+    --font-mono:'Baloo 2', sans-serif;
   }
 
   *{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -31,9 +33,9 @@
     min-height:100vh; min-height:100dvh;
     font-family:var(--font-body);
     background:
-      radial-gradient(circle at 15% 10%, rgba(45,95,224,0.25), transparent 45%),
-      radial-gradient(circle at 85% 90%, rgba(230,57,80,0.2), transparent 45%),
-      linear-gradient(160deg, var(--bg-1), var(--bg-2));
+      radial-gradient(circle at 15% 15%, rgba(255,255,255,0.5), transparent 40%),
+      radial-gradient(circle at 85% 25%, rgba(255,255,255,0.35), transparent 45%),
+      linear-gradient(135deg, var(--bg-1) 0%, var(--bg-2) 55%, var(--bg-3) 100%);
     background-attachment: fixed;
     color:var(--ink);
     display:flex; align-items:center; justify-content:center;
@@ -60,46 +62,49 @@
   .badaladas-badge{
     display:flex; align-items:center; justify-content:center; gap:10px;
     margin-bottom: 22px; animation: rise .5s ease both;
+    background: #FFFFFFcc; padding: 8px 18px; border-radius: 999px; width: fit-content; margin-left:auto; margin-right:auto;
+    box-shadow: 0 4px 14px rgba(58,46,92,0.12);
   }
-  .badaladas-badge img{ height:34px; width:auto; filter: brightness(0) invert(1); opacity:.92; }
+  .badaladas-badge img{ height:30px; width:auto; filter:none; opacity:1; }
   .badaladas-badge span{
-    font-family: var(--font-mono); font-size: 11px; letter-spacing:.18em; text-transform:uppercase;
-    color: var(--ink-dim); border-left: 1px solid var(--panel-border); padding-left: 10px;
+    font-family: var(--font-display); font-weight:600; font-size: 13px; letter-spacing:.02em;
+    color: var(--purple); border-left: 2px solid var(--panel-border); padding-left: 10px;
   }
 
   /* ---------- START ---------- */
   .start{ text-align:center; padding: 20px 24px 40px; }
-  .start .eyebrow{ font-family:var(--font-mono); letter-spacing:.18em; text-transform:uppercase; font-size:12px; color:var(--yellow); margin-bottom:16px; }
-  .start h1{ font-family:var(--font-display); font-size:clamp(32px,7vw,56px); font-weight:700; line-height:1.05; margin-bottom:14px; }
-  .start h1 span{ color:var(--yellow); }
-  .start p{ color:var(--ink-dim); max-width:440px; margin:0 auto 30px; font-size:15px; line-height:1.5; }
+  .start .eyebrow{ font-family:var(--font-display); font-weight:600; letter-spacing:.04em; font-size:14px; color:var(--purple); margin-bottom:16px; }
+  .start h1{ font-family:var(--font-display); font-size:clamp(32px,7vw,54px); font-weight:700; line-height:1.1; margin-bottom:14px; color:var(--ink); }
+  .start h1 span{ color:var(--red); }
+  .start p{ color:var(--ink-dim); max-width:440px; margin:0 auto 30px; font-size:16px; line-height:1.55; font-weight:600; }
 
   .field{ text-align:left; max-width:380px; margin:0 auto 16px; }
-  .field label{ display:block; font-family:var(--font-mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-dim); margin-bottom:8px; }
+  .field label{ display:block; font-family:var(--font-display); font-weight:600; font-size:13px; color:var(--purple); margin-bottom:8px; }
   .field input{
-    width:100%; padding:15px 16px; border-radius:12px; border:1px solid var(--panel-border);
-    background:var(--panel); color:var(--ink); font-family:var(--font-body); font-size:16px; outline:none;
+    width:100%; padding:15px 18px; border-radius:16px; border:2px solid var(--panel-border);
+    background:var(--panel); color:var(--ink); font-family:var(--font-body); font-weight:700; font-size:16px; outline:none;
   }
   .field input:focus{ border-color: var(--yellow); }
 
   .shape-row{ display:flex; justify-content:center; gap:12px; margin: 22px 0 30px; }
-  .shape{ width:30px; height:30px; }
+  .shape{ width:34px; height:34px; }
   .shape svg{ width:100%; height:100%; }
 
-  button{ font-family:var(--font-display); font-weight:700; font-size:16px; border:none; cursor:pointer; border-radius:14px; transition: transform .12s ease, filter .15s ease; }
+  button{ font-family:var(--font-display); font-weight:700; font-size:17px; border:none; cursor:pointer; border-radius:18px; transition: transform .12s ease, filter .15s ease; }
   button:active{ transform: scale(.96); }
-  .btn-primary{ background: var(--yellow); color:#241800; padding:16px 40px; }
+  .btn-primary{ background: var(--red); color:#fff; padding:17px 42px; box-shadow: 0 5px 0 #C43C58; }
+  .btn-primary:active{ box-shadow: 0 2px 0 #C43C58; transform: translateY(3px) scale(.98); }
   .btn-primary:disabled{ opacity:.4; }
 
-  .error-msg{ color: var(--red); font-family: var(--font-mono); font-size:13px; margin-top:-6px; margin-bottom:14px; min-height:16px; }
+  .error-msg{ color: var(--red); font-family: var(--font-body); font-weight:700; font-size:13px; margin-top:-6px; margin-bottom:14px; min-height:16px; }
 
   /* ---------- QUIZ ---------- */
-  .quiz-panel{ background:var(--panel); border:1px solid var(--panel-border); border-radius:20px; padding:24px 22px 28px; }
-  .quiz-top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; font-family:var(--font-mono); font-size:12px; color:var(--ink-dim); gap:10px; }
-  .quiz-top .school-tag{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:45%; color:var(--ink); }
+  .quiz-panel{ background:var(--panel); border:3px solid var(--panel-border); border-radius:26px; padding:24px 22px 28px; box-shadow: 0 10px 0 rgba(58,46,92,0.08); }
+  .quiz-top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; font-family:var(--font-display); font-weight:600; font-size:13px; color:var(--ink-dim); gap:10px; }
+  .quiz-top .school-tag{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:45%; color:var(--purple); }
   .score-tag{ color:var(--green); font-weight:700; flex-shrink:0; }
 
-  .timer-wrap{ height:8px; border-radius:999px; background:#0F1730; overflow:hidden; margin-bottom:24px; }
+  .timer-wrap{ height:12px; border-radius:999px; background:#F2ECFF; overflow:hidden; margin-bottom:24px; }
   .timer-bar{
     height:100%; width:100%;
     background-image: linear-gradient(90deg, var(--green), var(--yellow), var(--green));
@@ -108,15 +113,15 @@
     transition: width .2s linear, background-color .3s ease;
   }
 
-  .question-text{ font-family:var(--font-display); font-weight:700; font-size:clamp(20px,4vw,28px); line-height:1.25; margin-bottom:24px; min-height:64px; animation: rise .35s ease both; }
+  .question-text{ font-family:var(--font-display); font-weight:600; font-size:clamp(21px,4vw,29px); line-height:1.3; margin-bottom:24px; min-height:64px; animation: rise .35s ease both; color:var(--ink); }
 
   .answers{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   @media (max-width:560px){ .answers{ grid-template-columns:1fr; } }
 
   .answer{
-    display:flex; align-items:center; gap:12px; padding:17px 16px; border-radius:14px; border:none;
-    color:#fff; font-family:var(--font-body); font-weight:600; font-size:15px; text-align:left; line-height:1.3;
-    box-shadow: 0 4px 0 rgba(0,0,0,.18); min-height:56px;
+    display:flex; align-items:center; gap:12px; padding:18px 16px; border-radius:18px; border:none;
+    color:#fff; font-family:var(--font-body); font-weight:800; font-size:15px; text-align:left; line-height:1.3;
+    box-shadow: 0 5px 0 rgba(0,0,0,.15); min-height:58px;
     animation: rise .35s ease both;
   }
   .answers .answer:nth-child(1){animation-delay:.03s;}
@@ -124,46 +129,46 @@
   .answers .answer:nth-child(3){animation-delay:.15s;}
   .answers .answer:nth-child(4){animation-delay:.21s;}
 
-  .answer .shape{ width:24px; height:24px; flex-shrink:0; }
+  .answer .shape{ width:26px; height:26px; flex-shrink:0; }
   .answer[data-i="0"]{ background:var(--red); }
   .answer[data-i="1"]{ background:var(--blue); }
-  .answer[data-i="2"]{ background:var(--yellow); color:#241800; }
+  .answer[data-i="2"]{ background:var(--yellow); color:#5C3F00; }
   .answer[data-i="3"]{ background:var(--green); }
-  .answer:active:not(:disabled){ transform: scale(.97); }
+  .answer:active:not(:disabled){ transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,.15); }
   .answer:disabled{ cursor:default; }
-  .answer.correct{ outline:3px solid #fff; animation: pulseGood .9s ease-out 1; }
+  .answer.correct{ outline:4px solid #fff; animation: pulseGood .9s ease-out 1; }
   .answer.wrong{ opacity:.35; animation: shakeBad .5s ease-in-out 1; }
 
-  .feedback{ text-align:center; margin-top:20px; font-family:var(--font-mono); font-size:14px; min-height:20px; color:var(--ink-dim); }
+  .feedback{ text-align:center; margin-top:20px; font-family:var(--font-display); font-weight:600; font-size:15px; min-height:20px; color:var(--ink-dim); }
   .feedback.good{ color:var(--green); }
   .feedback.bad{ color:var(--red); }
 
   /* ---------- END / LEADERBOARD ---------- */
-  .end{ text-align:center; padding:40px 26px; background:var(--panel); border:1px solid var(--panel-border); border-radius:20px; }
-  .end .eyebrow{ font-family:var(--font-mono); letter-spacing:.18em; text-transform:uppercase; font-size:12px; color:var(--yellow); margin-bottom:12px; }
-  .final-school{ font-family:var(--font-display); font-weight:700; font-size:20px; margin-bottom:4px; }
+  .end{ text-align:center; padding:40px 26px; background:var(--panel); border:3px solid var(--panel-border); border-radius:26px; box-shadow: 0 10px 0 rgba(58,46,92,0.08); }
+  .end .eyebrow{ font-family:var(--font-display); font-weight:600; letter-spacing:.02em; font-size:14px; color:var(--purple); margin-bottom:12px; }
+  .final-school{ font-family:var(--font-display); font-weight:700; font-size:21px; margin-bottom:4px; color:var(--ink); }
   .final-score{ font-family:var(--font-mono); font-size:clamp(48px,11vw,72px); font-weight:700; color:var(--green); margin-bottom:2px; animation: popIn .55s cubic-bezier(.3,1.4,.5,1) both; }
-  .final-time{ font-family:var(--font-mono); font-size:14px; color:var(--ink-dim); margin-bottom:28px; }
+  .final-time{ font-family:var(--font-body); font-weight:700; font-size:14px; color:var(--ink-dim); margin-bottom:28px; }
 
-  .rank-status{ font-family:var(--font-mono); font-size:13px; color:var(--ink-dim); margin-bottom:22px; min-height:18px; }
+  .rank-status{ font-family:var(--font-body); font-weight:700; font-size:13px; color:var(--ink-dim); margin-bottom:22px; min-height:18px; }
 
   .leaderboard{ text-align:left; max-width:480px; margin:0 auto 28px; display:flex; flex-direction:column; gap:8px; }
   .lb-row{
-    display:grid; grid-template-columns: 30px 1fr auto auto; align-items:center; gap:10px;
-    padding:12px 14px; border-radius:12px; background:#0F1730; font-size:14px;
+    display:grid; grid-template-columns: 34px 1fr auto auto; align-items:center; gap:10px;
+    padding:12px 14px; border-radius:16px; background:#F7F2FF; font-size:14px; font-weight:700;
     animation: rise .3s ease both;
   }
-  .lb-row.me{ outline: 2px solid var(--yellow); }
+  .lb-row.me{ outline: 3px solid var(--yellow); }
   .lb-pos{ font-family:var(--font-mono); font-weight:700; color:var(--ink-dim); }
-  .lb-pos.p1{ color:var(--yellow); } .lb-pos.p2{ color:#c9d3e6; } .lb-pos.p3{ color:#d99a5b; }
-  .lb-school{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:600; }
+  .lb-pos.p1{ color:#E8A400; } .lb-pos.p2{ color:#9AA0B4; } .lb-pos.p3{ color:#C97A3D; }
+  .lb-school{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:800; color:var(--ink); }
   .lb-score{ font-family:var(--font-mono); color:var(--green); font-weight:700; }
-  .lb-time{ font-family:var(--font-mono); color:var(--ink-dim); font-size:12px; }
+  .lb-time{ font-family:var(--font-mono); color:var(--ink-dim); font-size:12px; font-weight:600; }
 
   .btn-row{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
-  .btn-ghost{ background:transparent; color:var(--ink); border:1px solid var(--panel-border); padding:14px 28px; }
+  .btn-ghost{ background:#F7F2FF; color:var(--purple); border:2px solid var(--panel-border); padding:15px 28px; }
 
-  footer.credit{ text-align:center; margin-top:18px; font-family:var(--font-mono); font-size:11px; color:#4C5A80; padding-bottom: env(safe-area-inset-bottom); }
+  footer.credit{ text-align:center; margin-top:18px; font-family:var(--font-body); font-weight:700; font-size:11px; color:#8F7FBF; padding-bottom: env(safe-area-inset-bottom); }
 
   @media (prefers-reduced-motion: reduce){
     *{ animation: none !important; }
@@ -182,9 +187,9 @@
   <!-- START -->
   <section class="screen active" id="screen-start">
     <div class="start">
-      <div class="eyebrow">Torres Vedras · Desafio entre Escolas</div>
-      <h1>Qual escola sabe <span>mesmo</span> mais?</h1>
-      <p>Um telemóvel por turma. Respondam juntos às perguntas — quem acertar mais e mais depressa sobe no ranking das escolas.</p>
+      <div class="eyebrow">🎈 Torres Vedras · Desafio entre Escolas 🎈</div>
+      <h1>Qual escola sabe <span>mesmo</span> mais? 🤔</h1>
+      <p>Um telemóvel por turma! Respondam juntos às perguntas — quem acertar mais e mais depressa sobe ao pódio das escolas! 🏆</p>
 
       <div class="field">
         <label for="input-escola">Nome da Escola / Turma</label>
@@ -198,7 +203,7 @@
         <div class="shape" style="color:var(--yellow)"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg></div>
         <div class="shape" style="color:var(--green)"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="3"/></svg></div>
       </div>
-      <button class="btn-primary" id="btn-start">Começar Quiz</button>
+      <button class="btn-primary" id="btn-start">Começar! 🚀</button>
     </div>
   </section>
 
@@ -220,15 +225,15 @@
   <!-- END -->
   <section class="screen" id="screen-end">
     <div class="end">
-      <div class="eyebrow">Resultado Final</div>
+      <div class="eyebrow">🎉 Resultado Final 🎉</div>
       <div class="final-school" id="final-school"></div>
       <div class="final-score" id="final-score">0</div>
       <div class="final-time" id="final-time"></div>
       <div class="rank-status" id="rank-status">A guardar resultado no ranking...</div>
       <div class="leaderboard" id="leaderboard"></div>
       <div class="btn-row">
-        <button class="btn-primary" id="btn-restart">Jogar Outra Vez</button>
-        <button class="btn-ghost" id="btn-refresh-rank">Atualizar Ranking</button>
+        <button class="btn-primary" id="btn-restart">Jogar Outra Vez 🔁</button>
+        <button class="btn-ghost" id="btn-refresh-rank">Ver Ranking 🏆</button>
       </div>
     </div>
   </section>
@@ -383,12 +388,12 @@ function selectAnswer(i, el){
     const speedBonus = Math.max(0, timeLeft / TIME_PER_QUESTION);
     const earned = Math.round(MAX_POINTS * (0.5 + 0.5 * speedBonus));
     score += earned;
-    feedbackEl.textContent = `Certo! +${earned} pontos`;
+    feedbackEl.textContent = `Boa! 🎉 +${earned} pontos`;
     feedbackEl.className = 'feedback good';
     sparkleBurst(el);
     if (navigator.vibrate) navigator.vibrate(30);
   } else {
-    feedbackEl.textContent = i === -1 ? 'Tempo esgotado!' : 'Errado!';
+    feedbackEl.textContent = i === -1 ? 'Tempo esgotado! ⏰' : 'Ups, não foi desta vez! 😅';
     feedbackEl.className = 'feedback bad';
     if (navigator.vibrate) navigator.vibrate([30,40,30]);
   }
