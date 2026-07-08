@@ -63,9 +63,21 @@ button:active { transform: scale(.97); }
 .lb-pos { width: 26px; text-align: center; color: var(--text-mid); }
 .lb-nome { flex: 1; text-align: left; }
 
+/* Ecrã de posição em tempo real (entre perguntas) */
+.posicao-card { padding: 26px 10px 8px; }
+.posicao-numero { font-family: var(--font-serif); font-weight: 600; font-size: 76px; line-height: 1; color: var(--star); animation: pop .4s ease both; }
+.posicao-legenda { font-size: 14px; color: rgba(255,255,255,.7); font-weight: 600; margin-top: 6px; }
+.posicao-variacao { display: inline-block; margin-top: 14px; font-size: 15px; font-weight: 800; padding: 6px 16px; border-radius: 999px; }
+.posicao-variacao.subiu { background: rgba(61,135,103,.25); color: #7fd8ae; }
+.posicao-variacao.desceu { background: rgba(201,74,82,.25); color: #f3a2a7; }
+.posicao-variacao.igual { background: rgba(255,255,255,.12); color: rgba(255,255,255,.75); }
+@keyframes pop { 0% { transform: scale(.6); opacity: 0; } 70% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); } }
+
 .screen { display: none; }
 .screen.active { display: block; animation: rise .35s ease both; }
 @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+.btn-som { position: fixed; top: 14px; right: 14px; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,.12); border: 1.5px solid rgba(255,255,255,.25); color: var(--white); font-size: 17px; display: flex; align-items: center; justify-content: center; z-index: 20; }
 </style>
 </head>
 <body>
@@ -128,6 +140,16 @@ button:active { transform: scale(.97); }
     </div>
   </section>
 
+  <!-- ECRÃ 5b: posição em tempo real -->
+  <section class="screen" id="screen-placar-jogador">
+    <div class="eyebrow">Classificação</div>
+    <div class="posicao-card">
+      <div class="posicao-numero" id="placar-posicao">1º</div>
+      <div class="posicao-legenda" id="placar-legenda">de 8 jogadores · 0 pontos</div>
+      <div class="posicao-variacao igual" id="placar-variacao">A próxima pergunta está a chegar...</div>
+    </div>
+  </section>
+
   <!-- ECRÃ 6: final -->
   <section class="screen" id="screen-final">
     <div class="eyebrow">Fim de Jogo</div>
@@ -137,7 +159,55 @@ button:active { transform: scale(.97); }
 
 </div>
 
+<button class="btn-som" id="btn-som" title="Som">🔊</button>
+
 <script>
+/* =====================================================
+   SOM — sintetizado com Web Audio, sem ficheiros externos
+   ===================================================== */
+const AudioFX = (() => {
+  let ctx;
+  let enabled = localStorage.getItem('quizcria_som') !== 'off';
+  function getCtx() {
+    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  }
+  function tone(freq, dur, type, vol, delay) {
+    if (!enabled) return;
+    try {
+      const c = getCtx();
+      const t0 = c.currentTime + (delay || 0);
+      const osc = c.createOscillator();
+      const gain = c.createGain();
+      osc.type = type || 'sine';
+      osc.frequency.setValueAtTime(freq, t0);
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(vol || 0.18, t0 + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+      osc.connect(gain).connect(c.destination);
+      osc.start(t0);
+      osc.stop(t0 + dur + 0.03);
+    } catch {}
+  }
+  return {
+    isEnabled: () => enabled,
+    toggle() {
+      enabled = !enabled;
+      localStorage.setItem('quizcria_som', enabled ? 'on' : 'off');
+      return enabled;
+    },
+    correct() { tone(523.25, 0.12, 'triangle', 0.22, 0); tone(659.25, 0.12, 'triangle', 0.22, 0.1); tone(783.99, 0.24, 'triangle', 0.24, 0.2); },
+    wrong()   { tone(220, 0.25, 'sawtooth', 0.18, 0); tone(160, 0.3, 'sawtooth', 0.16, 0.12); },
+    tap()     { tone(400, 0.08, 'square', 0.14); },
+    click()   { tone(320, 0.05, 'square', 0.1); },
+  };
+})();
+
+const btnSom = document.getElementById('btn-som');
+btnSom.textContent = AudioFX.isEnabled() ? '🔊' : '🔇';
+btnSom.addEventListener('click', () => { btnSom.textContent = AudioFX.toggle() ? '🔊' : '🔇'; });
+
 const API = {
   entrar: '/api/sala-entrar',
   estado: '/api/sala-estado',
@@ -150,6 +220,7 @@ let nome = '';
 let pollTimer = null;
 let perguntaAtualLocal = -1;
 let jaRespondiEstaPergunta = false;
+let posicaoAnterior = null;
 
 const screens = {
   entrar: document.getElementById('screen-entrar'),
@@ -157,6 +228,7 @@ const screens = {
   responder: document.getElementById('screen-responder'),
   aguardaRevelacao: document.getElementById('screen-aguarda-revelacao'),
   revelacao: document.getElementById('screen-revelacao'),
+  placarJogador: document.getElementById('screen-placar-jogador'),
   final: document.getElementById('screen-final'),
 };
 function showScreen(nomeEcra) {
@@ -166,7 +238,7 @@ function showScreen(nomeEcra) {
 
 document.getElementById('btn-entrar').addEventListener('click', entrar);
 document.querySelectorAll('.opcao').forEach(btn => {
-  btn.addEventListener('click', () => responder(parseInt(btn.dataset.i)));
+  btn.addEventListener('click', () => { AudioFX.tap(); responder(parseInt(btn.dataset.i)); });
 });
 
 async function entrar() {
@@ -218,6 +290,12 @@ async function atualizarEstado() {
   } catch {}
 }
 
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[ch]));
+}
+
 function render(data) {
   if (data.perguntaAtual !== perguntaAtualLocal) {
     perguntaAtualLocal = data.perguntaAtual;
@@ -242,6 +320,11 @@ function render(data) {
 
   if (data.fase === 'revelacao') {
     const acertou = data.jaRespondeu && data.respostaDada === data.correta;
+    const jaTocou = screens.revelacao.dataset.tocado === String(perguntaAtualLocal);
+    if (!jaTocou) {
+      screens.revelacao.dataset.tocado = String(perguntaAtualLocal);
+      if (data.jaRespondeu) AudioFX[acertou ? 'correct' : 'wrong'](); else AudioFX.wrong();
+    }
     document.getElementById('rev-emoji').textContent = data.jaRespondeu ? (acertou ? '🎉' : '😅') : '⏰';
     document.getElementById('rev-titulo').textContent = data.jaRespondeu
       ? (acertou ? 'Acertaste!' : 'Não foi desta vez.')
@@ -251,13 +334,37 @@ function render(data) {
     return;
   }
 
+  if (data.fase === 'placar') {
+    const posicaoAtual = data.minhaPosicao || data.totalJogadores || 1;
+    document.getElementById('placar-posicao').textContent = `${posicaoAtual}º`;
+    document.getElementById('placar-legenda').textContent = `de ${data.totalJogadores || data.jogadores.length} jogadores · ${data.meusPontos || 0} pontos`;
+
+    const variacaoEl = document.getElementById('placar-variacao');
+    if (posicaoAnterior === null) {
+      variacaoEl.textContent = 'A próxima pergunta está a chegar...';
+      variacaoEl.className = 'posicao-variacao igual';
+    } else if (posicaoAtual < posicaoAnterior) {
+      variacaoEl.textContent = `▲ Subiste ${posicaoAnterior - posicaoAtual} posição(ões)!`;
+      variacaoEl.className = 'posicao-variacao subiu';
+    } else if (posicaoAtual > posicaoAnterior) {
+      variacaoEl.textContent = `▼ Desceste ${posicaoAtual - posicaoAnterior} posição(ões)`;
+      variacaoEl.className = 'posicao-variacao desceu';
+    } else {
+      variacaoEl.textContent = 'Mantiveste a posição';
+      variacaoEl.className = 'posicao-variacao igual';
+    }
+    posicaoAnterior = posicaoAtual;
+    showScreen('placarJogador');
+    return;
+  }
+
   if (data.fase === 'final') {
     clearInterval(pollTimer);
     document.getElementById('final-pontos').textContent = `${data.meusPontos || 0} pontos`;
     document.getElementById('leaderboard-final').innerHTML = data.jogadores.map((j, idx) => `
       <div class="lb-row">
         <span class="lb-pos">${idx + 1}º</span>
-        <span class="lb-nome">${j.nome}</span>
+        <span class="lb-nome">${escapeHtml(j.nome)}</span>
         <span>${j.pontos} pts</span>
       </div>`).join('');
     showScreen('final');
