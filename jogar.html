@@ -241,6 +241,14 @@ document.querySelectorAll('.opcao').forEach(btn => {
   btn.addEventListener('click', () => { AudioFX.tap(); responder(parseInt(btn.dataset.i)); });
 });
 
+(function preencherPinDaUrl() {
+  const pinDaUrl = new URLSearchParams(window.location.search).get('pin');
+  if (pinDaUrl && /^\d{4}$/.test(pinDaUrl)) {
+    document.getElementById('input-pin').value = pinDaUrl;
+    document.getElementById('input-nome').focus();
+  }
+})();
+
 async function entrar() {
   const pinValor = document.getElementById('input-pin').value.trim();
   const nomeValor = document.getElementById('input-nome').value.trim();
