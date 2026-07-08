@@ -375,12 +375,19 @@ button:active { transform: scale(.97); }
 }
 
 /* Barra de tempo */
+.timer-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
 .timer-wrap {
+  flex: 1;
   height: 6px;
   background: #ece8dd;
   border-radius: 999px;
   overflow: hidden;
-  margin-bottom: 24px;
 }
 
 .timer-bar {
@@ -394,6 +401,27 @@ button:active { transform: scale(.97); }
 .timer-bar.urgent {
   background: var(--ans-a-bg);
   animation: timer-pulse .5s ease infinite;
+}
+
+.countdown-number {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 22px;
+  color: var(--text-dark);
+  min-width: 30px;
+  text-align: center;
+  flex-shrink: 0;
+  transition: color .2s;
+}
+
+.countdown-number.urgent {
+  color: var(--ans-a-bg);
+  animation: countdown-pulse .5s ease infinite;
+}
+
+@keyframes countdown-pulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.28); }
 }
 
 /* Pergunta */
@@ -644,6 +672,24 @@ button:active { transform: scale(.97); }
   .shape   { width: 26px; height: 26px; }
   .quiz-panel { padding: 18px 14px 20px; }
 }
+
+.btn-som {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.08);
+  border: 1.5px solid rgba(255,255,255,.18);
+  color: var(--white);
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 30;
+  cursor: pointer;
+}
 </style>
 </head>
 
@@ -660,6 +706,8 @@ button:active { transform: scale(.97); }
     <div class="badge-divider"></div>
     <span class="badge-label">BadaQuiz das Escolas</span>
   </div>
+
+  <button class="btn-som" id="btn-som" title="Som">🔊</button>
 
   <!-- ================================================
        ECRÃ 1 — INÍCIO
@@ -712,9 +760,12 @@ button:active { transform: scale(.97); }
         <span class="score-tag" id="score-label">0 pts</span>
       </div>
 
-      <!-- Barra de tempo -->
-      <div class="timer-wrap">
-        <div class="timer-bar" id="timer-bar"></div>
+      <!-- Barra de tempo + contagem decrescente -->
+      <div class="timer-row">
+        <div class="timer-wrap">
+          <div class="timer-bar" id="timer-bar"></div>
+        </div>
+        <div class="countdown-number" id="countdown-number">15</div>
       </div>
 
       <!-- Pergunta -->
@@ -774,9 +825,52 @@ const QUESTIONS = [
   { question: "O jornal Badaladas é um órgão de comunicação social de que tipo?", answers: ["Diário nacional", "Semanário regional", "Revista mensal de moda", "Jornal desportivo"], correct: 1 },
 ];
 
-const TIME_PER_QUESTION = 30;   /* segundos por pergunta */
+const TIME_PER_QUESTION = 15;   /* segundos por pergunta — ritmo mais rápido, estilo Kahoot */
 const MAX_POINTS        = 1000; /* pontos máximos por resposta */
 const API_RANKING       = '/api/ranking';
+
+/* =====================================================
+   SOM — sintetizado com Web Audio, sem ficheiros externos
+   ===================================================== */
+const AudioFX = (() => {
+  let ctx;
+  let enabled = localStorage.getItem('quizcria_som') !== 'off';
+  function getCtx() {
+    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  }
+  function tone(freq, dur, type, vol, delay) {
+    if (!enabled) return;
+    try {
+      const c = getCtx();
+      const t0 = c.currentTime + (delay || 0);
+      const osc = c.createOscillator();
+      const gain = c.createGain();
+      osc.type = type || 'sine';
+      osc.frequency.setValueAtTime(freq, t0);
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(vol || 0.18, t0 + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+      osc.connect(gain).connect(c.destination);
+      osc.start(t0);
+      osc.stop(t0 + dur + 0.03);
+    } catch {}
+  }
+  return {
+    isEnabled: () => enabled,
+    toggle() {
+      enabled = !enabled;
+      localStorage.setItem('quizcria_som', enabled ? 'on' : 'off');
+      return enabled;
+    },
+    tick()    { tone(880, 0.08, 'square', 0.14); },
+    correct() { tone(523.25, 0.12, 'triangle', 0.22, 0); tone(659.25, 0.12, 'triangle', 0.22, 0.1); tone(783.99, 0.24, 'triangle', 0.24, 0.2); },
+    wrong()   { tone(220, 0.25, 'sawtooth', 0.18, 0); tone(160, 0.3, 'sawtooth', 0.16, 0.12); },
+    start()   { tone(392, 0.1, 'triangle', 0.18, 0); tone(523.25, 0.14, 'triangle', 0.2, 0.12); tone(659.25, 0.18, 'triangle', 0.2, 0.26); },
+    click()   { tone(320, 0.05, 'square', 0.1); },
+  };
+})();
 
 /* Formas SVG para cada opção de resposta */
 const SHAPES = [
@@ -810,6 +904,7 @@ const schoolTag     = document.getElementById('school-tag');
 const progressLabel = document.getElementById('progress-label');
 const scoreLabel    = document.getElementById('score-label');
 const timerBar      = document.getElementById('timer-bar');
+const countdownNum  = document.getElementById('countdown-number');
 const questionText  = document.getElementById('question-text');
 const answersEl     = document.getElementById('answers');
 const feedbackEl    = document.getElementById('feedback');
@@ -822,6 +917,10 @@ const leaderboardEl = document.getElementById('leaderboard');
 /* =====================================================
    EVENTOS DOS BOTÕES PRINCIPAIS
    ===================================================== */
+const btnSom = document.getElementById('btn-som');
+btnSom.textContent = AudioFX.isEnabled() ? '🔊' : '🔇';
+btnSom.addEventListener('click', () => { btnSom.textContent = AudioFX.toggle() ? '🔊' : '🔇'; });
+
 document.getElementById('btn-start').addEventListener('click', startQuiz);
 document.getElementById('btn-restart').addEventListener('click', () => {
   showScreen(screenStart);
@@ -881,6 +980,9 @@ function loadQuestion() {
 
   timerBar.style.width = '100%';
   timerBar.classList.remove('urgent');
+  countdownNum.textContent = TIME_PER_QUESTION;
+  countdownNum.classList.remove('urgent');
+  AudioFX.start();
 
   /* Criar botões de resposta */
   answersEl.innerHTML = '';
@@ -895,13 +997,23 @@ function loadQuestion() {
 
   /* Temporizador */
   clearInterval(timerInterval);
+  let ultimoSegundoTocado = null;
   timerInterval = setInterval(() => {
     timeLeft -= 0.1;
     const pct = Math.max(0, (timeLeft / TIME_PER_QUESTION) * 100);
     timerBar.style.width = pct + '%';
 
-    /* Piscar quando restam menos de 8 segundos */
-    if (timeLeft <= 8) timerBar.classList.add('urgent');
+    const segundos = Math.max(0, Math.ceil(timeLeft));
+    countdownNum.textContent = segundos;
+
+    /* Urgência visual e sonora nos últimos 5 segundos */
+    const urgente = timeLeft <= 5;
+    timerBar.classList.toggle('urgent', urgente);
+    countdownNum.classList.toggle('urgent', urgente && timeLeft > 0);
+    if (urgente && segundos !== ultimoSegundoTocado && timeLeft > 0) {
+      ultimoSegundoTocado = segundos;
+      AudioFX.tick();
+    }
 
     if (timeLeft <= 0) {
       clearInterval(timerInterval);
@@ -956,10 +1068,12 @@ function selectAnswer(i, el) {
     feedbackEl.textContent = `Correto! +${earned} pontos`;
     feedbackEl.className   = 'feedback good';
     sparkleBurst(el);
+    AudioFX.correct();
     if (navigator.vibrate) navigator.vibrate(30);
   } else {
     feedbackEl.textContent = i === -1 ? 'Tempo esgotado.' : 'Não foi desta vez.';
     feedbackEl.className   = 'feedback bad';
+    AudioFX.wrong();
     if (navigator.vibrate) navigator.vibrate([30, 40, 30]);
   }
 
@@ -974,6 +1088,16 @@ function selectAnswer(i, el) {
       endQuiz();
     }
   }, 1600);
+}
+
+/* =====================================================
+   ESCAPAR HTML — evita XSS ao inserir texto de utilizadores
+   (nomes de escola) dentro de innerHTML
+   ===================================================== */
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[ch]));
 }
 
 /* =====================================================
@@ -1035,7 +1159,7 @@ async function loadLeaderboard(highlightSchool) {
       return `
         <div class="lb-row ${isMe ? 'me' : ''}" style="animation-delay:${idx * 0.05}s">
           <span class="lb-pos ${medals[idx] || ''}">${idx + 1}º</span>
-          <span class="lb-school">${r.escola}</span>
+          <span class="lb-school">${escapeHtml(r.escola)}</span>
           <span class="lb-score">${r.pontuacao}</span>
           <span class="lb-time">${formatTime(r.tempo_ms)}</span>
         </div>`;
