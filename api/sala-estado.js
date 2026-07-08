@@ -1,12 +1,28 @@
 import { sql, ensureTables } from './_db.js';
-import { QUESTIONS, TIME_PER_QUESTION_MS, REVEAL_DURATION_MS, MAX_POINTS } from './_questions.js';
+import { QUESTIONS, TIME_PER_QUESTION_MS, REVEAL_DURATION_MS, PLACAR_DURATION_MS, MAX_POINTS } from './_questions.js';
 
 async function revelarSeNecessario(sala) {
   const agora = Date.now();
   const inicio = new Date(sala.fase_inicio).getTime();
   const decorrido = agora - inicio;
 
+  // Cada transição de fase usa um UPDATE condicional (WHERE fase = <fase esperada>)
+  // com RETURNING para garantir que, mesmo com pedidos concorrentes (polling de
+  // vários jogadores/TV em simultâneo), apenas UM pedido "ganha" a transição e
+  // executa a atribuição de pontos — evitando pontos duplicados.
+
   if (sala.fase === 'pergunta' && decorrido >= TIME_PER_QUESTION_MS) {
+    const bloqueio = await sql`
+      UPDATE quiz_salas SET fase = 'revelacao', fase_inicio = NOW()
+      WHERE pin = ${sala.pin} AND fase = 'pergunta' AND pergunta_atual = ${sala.pergunta_atual}
+      RETURNING pin
+    `;
+    if (bloqueio.length === 0) {
+      // Outro pedido concorrente já avançou a fase — devolve o estado atual sem repetir a pontuação.
+      const atual = await sql`SELECT * FROM quiz_salas WHERE pin = ${sala.pin}`;
+      return atual[0] || sala;
+    }
+
     const pergunta = QUESTIONS[sala.pergunta_atual];
     const respostas = await sql`
       SELECT id, jogador_id, resposta, tempo_ms
@@ -26,19 +42,45 @@ async function revelarSeNecessario(sala) {
       await sql`UPDATE quiz_respostas SET pontos_ganhos = ${pontosGanhos} WHERE id = ${r.id}`;
     }
 
-    await sql`UPDATE quiz_salas SET fase = 'revelacao', fase_inicio = NOW() WHERE pin = ${sala.pin}`;
     return { ...sala, fase: 'revelacao', fase_inicio: new Date().toISOString() };
   }
 
   if (sala.fase === 'revelacao' && decorrido >= REVEAL_DURATION_MS) {
+    const bloqueio = await sql`
+      UPDATE quiz_salas SET fase = 'placar', fase_inicio = NOW()
+      WHERE pin = ${sala.pin} AND fase = 'revelacao' AND pergunta_atual = ${sala.pergunta_atual}
+      RETURNING pin
+    `;
+    if (bloqueio.length === 0) {
+      const atual = await sql`SELECT * FROM quiz_salas WHERE pin = ${sala.pin}`;
+      return atual[0] || sala;
+    }
+    return { ...sala, fase: 'placar', fase_inicio: new Date().toISOString() };
+  }
+
+  if (sala.fase === 'placar' && decorrido >= PLACAR_DURATION_MS) {
     const proxima = sala.pergunta_atual + 1;
     if (proxima < QUESTIONS.length) {
-      await sql`
-        UPDATE quiz_salas SET fase = 'pergunta', pergunta_atual = ${proxima}, fase_inicio = NOW() WHERE pin = ${sala.pin}
+      const bloqueio = await sql`
+        UPDATE quiz_salas SET fase = 'pergunta', pergunta_atual = ${proxima}, fase_inicio = NOW()
+        WHERE pin = ${sala.pin} AND fase = 'placar' AND pergunta_atual = ${sala.pergunta_atual}
+        RETURNING pin
       `;
+      if (bloqueio.length === 0) {
+        const atual = await sql`SELECT * FROM quiz_salas WHERE pin = ${sala.pin}`;
+        return atual[0] || sala;
+      }
       return { ...sala, fase: 'pergunta', pergunta_atual: proxima, fase_inicio: new Date().toISOString() };
     } else {
-      await sql`UPDATE quiz_salas SET fase = 'final' WHERE pin = ${sala.pin}`;
+      const bloqueio = await sql`
+        UPDATE quiz_salas SET fase = 'final'
+        WHERE pin = ${sala.pin} AND fase = 'placar' AND pergunta_atual = ${sala.pergunta_atual}
+        RETURNING pin
+      `;
+      if (bloqueio.length === 0) {
+        const atual = await sql`SELECT * FROM quiz_salas WHERE pin = ${sala.pin}`;
+        return atual[0] || sala;
+      }
       return { ...sala, fase: 'final' };
     }
   }
@@ -69,15 +111,19 @@ export default async function handler(req, res) {
     const agora = Date.now();
     const inicio = new Date(sala.fase_inicio).getTime();
     const decorrido = agora - inicio;
-    const tempoRestanteMs = sala.fase === 'pergunta'
-      ? Math.max(0, TIME_PER_QUESTION_MS - decorrido)
-      : sala.fase === 'revelacao'
-        ? Math.max(0, REVEAL_DURATION_MS - decorrido)
-        : 0;
+    const tempoTotalPorFase = {
+      pergunta: TIME_PER_QUESTION_MS,
+      revelacao: REVEAL_DURATION_MS,
+      placar: PLACAR_DURATION_MS,
+    };
+    const tempoTotalMs = tempoTotalPorFase[sala.fase] || 0;
+    const tempoRestanteMs = tempoTotalMs ? Math.max(0, tempoTotalMs - decorrido) : 0;
 
     const respostasAtuais = await sql`
-      SELECT jogador_id FROM quiz_respostas WHERE pin = ${pin} AND pergunta_indice = ${sala.pergunta_atual}
+      SELECT jogador_id, resposta FROM quiz_respostas WHERE pin = ${pin} AND pergunta_indice = ${sala.pergunta_atual}
     `;
+
+    const jogadoresOrdenados = jogadores.map(j => ({ id: j.id, nome: j.nome, pontos: j.pontos }));
 
     const base = {
       ok: true,
@@ -86,8 +132,8 @@ export default async function handler(req, res) {
       perguntaAtual: sala.pergunta_atual,
       totalPerguntas: QUESTIONS.length,
       tempoRestanteMs,
-      tempoTotalMs: sala.fase === 'revelacao' ? REVEAL_DURATION_MS : TIME_PER_QUESTION_MS,
-      jogadores: jogadores.map(j => ({ id: j.id, nome: j.nome, pontos: j.pontos })),
+      tempoTotalMs,
+      jogadores: jogadoresOrdenados,
       numRespostas: respostasAtuais.length,
     };
 
@@ -95,7 +141,15 @@ export default async function handler(req, res) {
       const pergunta = QUESTIONS[sala.pergunta_atual];
       base.pergunta = pergunta.question;
       base.opcoes = pergunta.answers;
-      if (sala.fase === 'revelacao') base.correta = pergunta.correct;
+      if (sala.fase === 'revelacao') {
+        base.correta = pergunta.correct;
+        // Distribuição de respostas por opção — para o gráfico de barras estilo Kahoot
+        const distribuicao = new Array(pergunta.answers.length).fill(0);
+        for (const r of respostasAtuais) {
+          if (r.resposta >= 0 && r.resposta < distribuicao.length) distribuicao[r.resposta]++;
+        }
+        base.distribuicao = distribuicao;
+      }
     }
 
     if (papel === 'jogador' && jogadorId) {
@@ -111,8 +165,10 @@ export default async function handler(req, res) {
         base.respostaDada = jaRespondeu[0].resposta;
         base.pontosGanhos = jaRespondeu[0].pontos_ganhos;
       }
-      const eu = jogadores.find(j => j.id === idNum);
-      base.meusPontos = eu ? eu.pontos : 0;
+      const idxEu = jogadoresOrdenados.findIndex(j => j.id === idNum);
+      base.meusPontos = idxEu >= 0 ? jogadoresOrdenados[idxEu].pontos : 0;
+      base.minhaPosicao = idxEu >= 0 ? idxEu + 1 : null;
+      base.totalJogadores = jogadoresOrdenados.length;
     }
 
     return res.status(200).json(base);
