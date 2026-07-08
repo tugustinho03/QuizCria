@@ -43,32 +43,44 @@ button:active { transform: scale(.97); }
 .btn-ghost { background: transparent; color: var(--white); border: 1.5px solid rgba(255,255,255,.3); font-size: 15px; padding: 13px 28px; }
 
 /* ---- Ecrã de pergunta ---- */
-.q-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-weight: 700; color: rgba(255,255,255,.75); font-size: 15px; }
+.q-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-weight: 700; color: rgba(255,255,255,.75); font-size: 15px; }
+.q-top-right { display: flex; align-items: center; gap: 14px; }
+.countdown-number { font-family: var(--font-serif); font-weight: 600; font-size: 30px; color: var(--white); min-width: 46px; text-align: center; transition: color .2s; }
+.countdown-number.urgent { color: var(--ans-a-bg); animation: countdown-pulse .5s ease infinite; }
+@keyframes countdown-pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.22); } }
 .timer-wrap { height: 10px; background: rgba(255,255,255,.15); border-radius: 999px; overflow: hidden; margin-bottom: 30px; }
-.timer-bar { height: 100%; background: linear-gradient(90deg, var(--ans-b-bg), var(--star)); border-radius: 999px; transition: width .2s linear; }
+.timer-bar { height: 100%; background: linear-gradient(90deg, var(--ans-b-bg), var(--star)); border-radius: 999px; transition: width .1s linear, background .3s; }
+.timer-bar.urgent { background: var(--ans-a-bg); }
 .pergunta-texto { font-family: var(--font-serif); font-weight: 600; font-size: clamp(26px, 4.2vw, 42px); line-height: 1.3; margin-bottom: 34px; }
 .opcoes { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.opcao { border-radius: 16px; padding: 26px 22px; font-size: clamp(18px, 2.6vw, 24px); font-weight: 700; text-align: left; color: var(--white); box-shadow: 0 6px 20px rgba(0,0,0,0.25); transition: filter .3s, box-shadow .3s; }
+.opcao { position: relative; overflow: hidden; border-radius: 16px; padding: 26px 22px; font-size: clamp(18px, 2.6vw, 24px); font-weight: 700; text-align: left; color: var(--white); box-shadow: 0 6px 20px rgba(0,0,0,0.25); transition: filter .3s, box-shadow .3s; }
 .opcao:nth-child(1) { background: var(--ans-a-bg); }
 .opcao:nth-child(2) { background: var(--ans-b-bg); }
 .opcao:nth-child(3) { background: var(--ans-c-bg); color: var(--text-dark); }
 .opcao:nth-child(4) { background: var(--ans-d-bg); }
-.opcao.certa { box-shadow: 0 0 0 5px #3d8767, 0 6px 20px rgba(0,0,0,0.25); filter: brightness(1.1); }
+.opcao.certa { box-shadow: 0 0 0 5px #3d8767, 0 6px 20px rgba(0,0,0,0.25); filter: brightness(1.1); animation: pop .35s ease; }
 .opcao.errada { filter: brightness(.5) saturate(.4); }
+.opcao-barra { position: absolute; left: 0; bottom: 0; height: 6px; background: rgba(255,255,255,.55); width: 0%; transition: width .6s cubic-bezier(.2,.8,.3,1); }
+.opcao-contagem { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; background: rgba(0,0,0,.22); padding: 3px 10px; border-radius: 999px; }
 .respostas-status { margin-top: 26px; font-weight: 700; color: rgba(255,255,255,.7); }
 
 /* ---- Leaderboard ---- */
 .leaderboard { display: flex; flex-direction: column; gap: 10px; max-width: 640px; margin: 0 auto; }
-.lb-row { display: flex; align-items: center; gap: 14px; background: var(--white-card); color: var(--text-dark); border-radius: 14px; padding: 14px 22px; font-weight: 700; box-shadow: 0 4px 16px rgba(0,0,0,0.18); }
+.lb-row { display: flex; align-items: center; gap: 14px; background: var(--white-card); color: var(--text-dark); border-radius: 14px; padding: 14px 22px; font-weight: 700; box-shadow: 0 4px 16px rgba(0,0,0,0.18); opacity: 0; animation: rise .4s ease both; }
 .lb-pos { width: 34px; font-size: 18px; font-weight: 800; color: var(--text-mid); text-align: center; }
 .lb-pos.p1 { color: #b4822a; font-size: 22px; }
 .lb-pos.p2 { color: #888; font-size: 20px; }
 .lb-pos.p3 { color: #9c6a4a; font-size: 19px; }
 .lb-nome { flex: 1; text-align: left; }
 .lb-pontos { color: var(--bg-end); }
+.placar-sub { color: rgba(255,255,255,.68); font-size: 15px; font-weight: 600; margin-top: 26px; }
 .screen { display: none; }
 .screen.active { display: block; animation: rise .4s ease both; }
 @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.04); } 100% { transform: scale(1); } }
+
+/* ---- Som ---- */
+.btn-som { position: fixed; top: 18px; right: 18px; width: 46px; height: 46px; border-radius: 50%; background: rgba(255,255,255,.12); border: 1.5px solid rgba(255,255,255,.25); color: var(--white); font-size: 20px; display: flex; align-items: center; justify-content: center; z-index: 20; }
 </style>
 </head>
 <body>
@@ -100,11 +112,22 @@ button:active { transform: scale(.97); }
   <section class="screen" id="screen-pergunta">
     <div class="q-top">
       <span id="q-progresso">Pergunta 1 / 6</span>
-      <span id="q-respostas">0 / 0 responderam</span>
+      <div class="q-top-right">
+        <span id="q-respostas">0 / 0 responderam</span>
+        <span class="countdown-number" id="countdown-number">15</span>
+      </div>
     </div>
     <div class="timer-wrap"><div class="timer-bar" id="timer-bar"></div></div>
     <div class="pergunta-texto" id="q-texto">A carregar...</div>
     <div class="opcoes" id="q-opcoes"></div>
+  </section>
+
+  <!-- ECRÃ 3b: classificação em tempo real entre perguntas -->
+  <section class="screen" id="screen-placar">
+    <div class="eyebrow">Classificação</div>
+    <h1>Como vão as coisas?</h1>
+    <div class="leaderboard" id="leaderboard-placar"></div>
+    <div class="placar-sub">A próxima pergunta está a chegar...</div>
   </section>
 
   <!-- ECRÃ 4: final -->
@@ -119,7 +142,56 @@ button:active { transform: scale(.97); }
 
 </div>
 
+<button class="btn-som" id="btn-som" title="Som">🔊</button>
+
 <script>
+/* =====================================================
+   SOM — sintetizado com Web Audio, sem ficheiros externos
+   ===================================================== */
+const AudioFX = (() => {
+  let ctx;
+  let enabled = localStorage.getItem('quizcria_som') !== 'off';
+  function getCtx() {
+    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  }
+  function tone(freq, dur, type, vol, delay) {
+    if (!enabled) return;
+    try {
+      const c = getCtx();
+      const t0 = c.currentTime + (delay || 0);
+      const osc = c.createOscillator();
+      const gain = c.createGain();
+      osc.type = type || 'sine';
+      osc.frequency.setValueAtTime(freq, t0);
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(vol || 0.18, t0 + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+      osc.connect(gain).connect(c.destination);
+      osc.start(t0);
+      osc.stop(t0 + dur + 0.03);
+    } catch {}
+  }
+  return {
+    isEnabled: () => enabled,
+    toggle() {
+      enabled = !enabled;
+      localStorage.setItem('quizcria_som', enabled ? 'on' : 'off');
+      return enabled;
+    },
+    tick()    { tone(880, 0.08, 'square', 0.14); },
+    correct() { tone(523.25, 0.12, 'triangle', 0.22, 0); tone(659.25, 0.12, 'triangle', 0.22, 0.1); tone(783.99, 0.24, 'triangle', 0.24, 0.2); },
+    wrong()   { tone(220, 0.25, 'sawtooth', 0.18, 0); tone(160, 0.3, 'sawtooth', 0.16, 0.12); },
+    start()   { tone(392, 0.1, 'triangle', 0.18, 0); tone(523.25, 0.14, 'triangle', 0.2, 0.12); tone(659.25, 0.18, 'triangle', 0.2, 0.26); },
+    click()   { tone(320, 0.05, 'square', 0.1); },
+  };
+})();
+
+const btnSom = document.getElementById('btn-som');
+btnSom.textContent = AudioFX.isEnabled() ? '🔊' : '🔇';
+btnSom.addEventListener('click', () => { btnSom.textContent = AudioFX.toggle() ? '🔊' : '🔇'; });
+
 const API = {
   criar: '/api/sala-criar',
   iniciar: '/api/sala-iniciar',
@@ -130,11 +202,18 @@ const SHAPES = ['▲', '◆', '●', '■'];
 let pin = null;
 let pollTimer = null;
 let faseAtual = null;
+let perguntaAtualLocal = -1;
+let ultimoSegundoInteiro = null;
+
+/* Relógio local suavizado (interpolado entre pedidos ao servidor) */
+let relogio = { restante: 0, total: 0, marcaTempo: 0, ativo: false };
+let rafId = null;
 
 const screens = {
   criar: document.getElementById('screen-criar'),
   lobby: document.getElementById('screen-lobby'),
   pergunta: document.getElementById('screen-pergunta'),
+  placar: document.getElementById('screen-placar'),
   final: document.getElementById('screen-final'),
 };
 function showScreen(nome) {
@@ -147,6 +226,7 @@ document.getElementById('btn-iniciar').addEventListener('click', iniciarJogo);
 document.getElementById('btn-nova-sala').addEventListener('click', () => location.reload());
 
 async function criarSala() {
+  AudioFX.click();
   const res = await fetch(API.criar, { method: 'POST' });
   const data = await res.json();
   if (!data.ok) { alert(data.erro || 'Erro ao criar sala.'); return; }
@@ -155,11 +235,12 @@ async function criarSala() {
   document.getElementById('lobby-endereco').textContent = `Entrem em ${window.location.host}/jogar.html`;
   showScreen('lobby');
   clearInterval(pollTimer);
-  pollTimer = setInterval(atualizarEstado, 1200);
+  pollTimer = setInterval(atualizarEstado, 1000);
   atualizarEstado();
 }
 
 async function iniciarJogo() {
+  AudioFX.start();
   await fetch(API.iniciar, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -176,45 +257,118 @@ async function atualizarEstado() {
   } catch {}
 }
 
+/* Ciclo de animação: interpola o tempo restante entre pedidos ao servidor,
+   dando uma contagem decrescente suave e não aos saltos (estilo Kahoot). */
+function tickRelogio() {
+  if (!relogio.ativo) return;
+  const decorrido = performance.now() - relogio.marcaTempo;
+  const restante = Math.max(0, relogio.restante - decorrido);
+  const pct = relogio.total ? Math.max(0, (restante / relogio.total) * 100) : 0;
+
+  const barra = document.getElementById('timer-bar');
+  const numero = document.getElementById('countdown-number');
+  if (barra) {
+    barra.style.width = pct + '%';
+    barra.classList.toggle('urgent', restante <= 5000);
+  }
+  if (numero) {
+    const segundos = Math.ceil(restante / 1000);
+    numero.textContent = segundos;
+    numero.classList.toggle('urgent', restante <= 5000 && restante > 0);
+    if (segundos !== ultimoSegundoInteiro && restante > 0) {
+      ultimoSegundoInteiro = segundos;
+      if (restante <= 5000) AudioFX.tick();
+    }
+  }
+  rafId = requestAnimationFrame(tickRelogio);
+}
+
+function iniciarRelogio(restante, total) {
+  relogio = { restante, total, marcaTempo: performance.now(), ativo: true };
+  ultimoSegundoInteiro = null;
+  cancelAnimationFrame(rafId);
+  rafId = requestAnimationFrame(tickRelogio);
+}
+
+function pararRelogio() {
+  relogio.ativo = false;
+  cancelAnimationFrame(rafId);
+}
+
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[ch]));
+}
+
 function render(data) {
   faseAtual = data.fase;
 
   if (data.fase === 'lobby') {
+    pararRelogio();
     showScreen('lobby');
     document.getElementById('btn-iniciar').disabled = data.jogadores.length === 0;
     document.getElementById('lista-jogadores').innerHTML = data.jogadores
-      .map(j => `<div class="jogador-chip">${j.nome}</div>`).join('');
+      .map(j => `<div class="jogador-chip">${escapeHtml(j.nome)}</div>`).join('');
     return;
   }
 
   if (data.fase === 'pergunta' || data.fase === 'revelacao') {
+    if (data.perguntaAtual !== perguntaAtualLocal) {
+      perguntaAtualLocal = data.perguntaAtual;
+      if (data.fase === 'pergunta') AudioFX.start();
+    }
     showScreen('pergunta');
     document.getElementById('q-progresso').textContent = `Pergunta ${data.perguntaAtual + 1} / ${data.totalPerguntas}`;
     document.getElementById('q-respostas').textContent = `${data.numRespostas} / ${data.jogadores.length} responderam`;
     document.getElementById('q-texto').textContent = data.pergunta || '';
 
-    const pct = Math.max(0, (data.tempoRestanteMs / data.tempoTotalMs) * 100);
-    document.getElementById('timer-bar').style.width = pct + '%';
+    iniciarRelogio(data.tempoRestanteMs, data.tempoTotalMs);
 
+    const total = (data.distribuicao || []).reduce((a, b) => a + b, 0);
     const opcoesEl = document.getElementById('q-opcoes');
+    const jaTinhaRevelado = opcoesEl.dataset.revelado === 'true';
+    if (data.fase === 'revelacao' && !jaTinhaRevelado) AudioFX[data.distribuicao ? 'correct' : 'click']();
+    opcoesEl.dataset.revelado = data.fase === 'revelacao' ? 'true' : 'false';
+
     opcoesEl.innerHTML = (data.opcoes || []).map((op, i) => {
       let cls = 'opcao';
+      let extra = '';
       if (data.fase === 'revelacao') {
         cls += i === data.correta ? ' certa' : ' errada';
+        if (data.distribuicao) {
+          const n = data.distribuicao[i] || 0;
+          const pctBarra = total ? (n / total) * 100 : 0;
+          extra = `<span class="opcao-barra" style="width:${pctBarra}%"></span><span class="opcao-contagem">${n}</span>`;
+        }
       }
-      return `<div class="${cls}">${SHAPES[i]}&nbsp;&nbsp;${op}</div>`;
+      return `<div class="${cls}">${SHAPES[i]}&nbsp;&nbsp;${op}${extra}</div>`;
     }).join('');
     return;
   }
 
+  if (data.fase === 'placar') {
+    pararRelogio();
+    showScreen('placar');
+    const medals = ['p1', 'p2', 'p3'];
+    document.getElementById('leaderboard-placar').innerHTML = data.jogadores.map((j, idx) => `
+      <div class="lb-row" style="animation-delay:${idx * 0.08}s">
+        <span class="lb-pos ${medals[idx] || ''}">${idx + 1}º</span>
+        <span class="lb-nome">${escapeHtml(j.nome)}</span>
+        <span class="lb-pontos">${j.pontos} pts</span>
+      </div>`).join('');
+    return;
+  }
+
   if (data.fase === 'final') {
+    pararRelogio();
     showScreen('final');
     clearInterval(pollTimer);
     const medals = ['p1', 'p2', 'p3'];
     document.getElementById('leaderboard-final').innerHTML = data.jogadores.map((j, idx) => `
-      <div class="lb-row">
+      <div class="lb-row" style="animation-delay:${idx * 0.08}s">
         <span class="lb-pos ${medals[idx] || ''}">${idx + 1}º</span>
-        <span class="lb-nome">${j.nome}</span>
+        <span class="lb-nome">${escapeHtml(j.nome)}</span>
         <span class="lb-pontos">${j.pontos} pts</span>
       </div>`).join('');
   }
