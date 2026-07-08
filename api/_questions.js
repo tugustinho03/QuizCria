@@ -7,6 +7,7 @@ export const QUESTIONS = [
   { question: "O jornal Badaladas é um órgão de comunicação social de que tipo?", answers: ["Diário nacional", "Semanário regional", "Revista mensal de moda", "Jornal desportivo"], correct: 1 },
 ];
 
-export const TIME_PER_QUESTION_MS = 20000;
-export const REVEAL_DURATION_MS = 6000;
+export const TIME_PER_QUESTION_MS = 15000; // 15s por pergunta — ritmo mais rápido, estilo Kahoot
+export const REVEAL_DURATION_MS = 4000;    // revelação mais curta e dinâmica
+export const PLACAR_DURATION_MS = 4500;    // ecrã de classificação em tempo real entre perguntas
 export const MAX_POINTS = 1000;
