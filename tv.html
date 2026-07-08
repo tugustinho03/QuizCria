@@ -86,7 +86,7 @@ button:active { transform: scale(.97); }
 
   <!-- ECRÃ 2: lobby (à espera de jogadores) -->
   <section class="screen" id="screen-lobby">
-    <div class="eyebrow">Entrem em badaquiz.vercel.app/jogar</div>
+    <div class="eyebrow" id="lobby-endereco">Entrem em ...</div>
     <h1>Código da sala</h1>
     <div class="card">
       <div class="pin-box" id="pin-lobby">----</div>
@@ -152,6 +152,7 @@ async function criarSala() {
   if (!data.ok) { alert(data.erro || 'Erro ao criar sala.'); return; }
   pin = data.pin;
   document.getElementById('pin-lobby').textContent = pin;
+  document.getElementById('lobby-endereco').textContent = `Entrem em ${window.location.host}/jogar.html`;
   showScreen('lobby');
   clearInterval(pollTimer);
   pollTimer = setInterval(atualizarEstado, 1200);
