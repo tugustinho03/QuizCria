@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>BadaQuiz — Jogar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-start: #0e1526; --bg-mid: #16213f; --bg-end: #1b2947;
+  --ans-a-bg: #c94a52; --ans-b-bg: #3568b0; --ans-c-bg: #c98a2e; --ans-d-bg: #3d8767;
+  --white: #ffffff; --white-card: #fbfaf7;
+  --text-dark: #171d2e; --text-mid: #5c6478; --star: #e3a53d;
+  --font: 'Manrope', sans-serif; --font-serif: 'Fraunces', serif;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  min-height: 100vh; min-height: 100dvh; font-family: var(--font); color: var(--white);
+  background:
+    radial-gradient(circle at 12% -10%, rgba(227,165,61,0.10), transparent 40%),
+    radial-gradient(circle at 100% 110%, rgba(53,104,176,0.16), transparent 45%),
+    linear-gradient(160deg, var(--bg-start) 0%, var(--bg-mid) 55%, var(--bg-end) 100%);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px 16px; touch-action: manipulation;
+}
+.wrap { width: 100%; max-width: 460px; text-align: center; }
+.eyebrow { font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--star); margin-bottom: 14px; }
+h1 { font-family: var(--font-serif); font-style: italic; font-weight: 600; font-size: clamp(26px, 7vw, 36px); margin-bottom: 18px; }
+.card { background: var(--white-card); color: var(--text-dark); border-radius: 20px; padding: 28px 24px; box-shadow: 0 16px 50px rgba(0,0,0,0.35); }
+.field { text-align: left; margin-bottom: 14px; }
+.field label { display: block; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-mid); margin-bottom: 7px; }
+.field input { width: 100%; padding: 15px 16px; border-radius: 12px; border: 1.5px solid rgba(23,29,46,.15); font-family: var(--font); font-weight: 600; font-size: 16px; outline: none; }
+.field input:focus { border-color: var(--star); }
+.error-msg { color: #9c383e; font-size: 13px; font-weight: 700; min-height: 18px; margin-bottom: 6px; }
+button { font-family: var(--font); font-weight: 700; border: none; cursor: pointer; border-radius: 12px; transition: transform .12s, filter .15s; }
+button:active { transform: scale(.97); }
+.btn-primary { width: 100%; background: var(--star); color: var(--text-dark); font-size: 17px; padding: 16px; box-shadow: 0 6px 18px rgba(227,165,61,0.35); margin-top: 6px; }
+.btn-primary:hover { filter: brightness(1.05); }
+
+/* Espera */
+.aviso { color: rgba(255,255,255,.75); font-size: 16px; font-weight: 600; line-height: 1.6; margin-top: 10px; }
+.pontos-chip { display: inline-block; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); padding: 8px 20px; border-radius: 999px; font-weight: 800; margin-top: 18px; }
+
+/* Botões de resposta grandes */
+.opcoes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 8px; }
+.opcao { aspect-ratio: 1; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 48px; color: var(--white); box-shadow: 0 6px 20px rgba(0,0,0,0.25); border: none; }
+.opcao:nth-child(1) { background: var(--ans-a-bg); }
+.opcao:nth-child(2) { background: var(--ans-b-bg); }
+.opcao:nth-child(3) { background: var(--ans-c-bg); }
+.opcao:nth-child(4) { background: var(--ans-d-bg); }
+.opcao:active { transform: scale(.95); }
+.opcao:disabled { opacity: .35; }
+
+.resultado { padding: 30px 10px; }
+.resultado .emoji { font-size: 56px; margin-bottom: 12px; }
+.resultado .titulo { font-family: var(--font-serif); font-size: 28px; font-weight: 600; margin-bottom: 8px; }
+.resultado .pontos { color: var(--star); font-weight: 800; font-size: 18px; }
+
+.leaderboard { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; }
+.lb-row { display: flex; align-items: center; gap: 10px; background: var(--white-card); color: var(--text-dark); border-radius: 12px; padding: 10px 16px; font-weight: 700; font-size: 14px; }
+.lb-pos { width: 26px; text-align: center; color: var(--text-mid); }
+.lb-nome { flex: 1; text-align: left; }
+
+.screen { display: none; }
+.screen.active { display: block; animation: rise .35s ease both; }
+@keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ECRÃ 1: entrar na sala -->
+  <section class="screen active" id="screen-entrar">
+    <div class="eyebrow">BadaQuiz das Escolas</div>
+    <h1>Entra no jogo</h1>
+    <div class="card">
+      <div class="field">
+        <label for="input-pin">Código da sala</label>
+        <input type="tel" id="input-pin" placeholder="0000" maxlength="4" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label for="input-nome">O teu nome</label>
+        <input type="text" id="input-nome" placeholder="Ex.: Ana" maxlength="30">
+      </div>
+      <div class="error-msg" id="entrar-erro"></div>
+      <button class="btn-primary" id="btn-entrar">Entrar</button>
+    </div>
+  </section>
+
+  <!-- ECRÃ 2: à espera --> 
+  <section class="screen" id="screen-espera">
+    <div class="eyebrow">Estás dentro!</div>
+    <h1 id="espera-nome">Olá</h1>
+    <div class="card">
+      <p class="aviso">A pergunta vai aparecer no ecrã grande.<br>Olha para lá e responde aqui quando começar.</p>
+      <div class="pontos-chip" id="espera-pontos">0 pontos</div>
+    </div>
+  </section>
+
+  <!-- ECRÃ 3: responder -->
+  <section class="screen" id="screen-responder">
+    <p class="aviso" style="margin-bottom:16px">Olha para o ecrã grande e escolhe a resposta certa!</p>
+    <div class="opcoes" id="opcoes-jogador">
+      <button class="opcao" data-i="0">▲</button>
+      <button class="opcao" data-i="1">◆</button>
+      <button class="opcao" data-i="2">●</button>
+      <button class="opcao" data-i="3">■</button>
+    </div>
+  </section>
+
+  <!-- ECRÃ 4: aguardando revelação -->
+  <section class="screen" id="screen-aguarda-revelacao">
+    <div class="resultado">
+      <div class="emoji">🤔</div>
+      <div class="titulo">Resposta enviada!</div>
+      <p class="aviso">A aguardar pelos outros jogadores...</p>
+    </div>
+  </section>
+
+  <!-- ECRÃ 5: revelação -->
+  <section class="screen" id="screen-revelacao">
+    <div class="resultado">
+      <div class="emoji" id="rev-emoji">🎉</div>
+      <div class="titulo" id="rev-titulo">Certo!</div>
+      <div class="pontos" id="rev-pontos">+450 pontos</div>
+    </div>
+  </section>
+
+  <!-- ECRÃ 6: final -->
+  <section class="screen" id="screen-final">
+    <div class="eyebrow">Fim de Jogo</div>
+    <h1 id="final-pontos">0 pontos</h1>
+    <div class="leaderboard" id="leaderboard-final"></div>
+  </section>
+
+</div>
+
+<script>
+const API = {
+  entrar: '/api/sala-entrar',
+  estado: '/api/sala-estado',
+  responder: '/api/sala-responder',
+};
+
+let pin = null;
+let jogadorId = null;
+let nome = '';
+let pollTimer = null;
+let perguntaAtualLocal = -1;
+let jaRespondiEstaPergunta = false;
+
+const screens = {
+  entrar: document.getElementById('screen-entrar'),
+  espera: document.getElementById('screen-espera'),
+  responder: document.getElementById('screen-responder'),
+  aguardaRevelacao: document.getElementById('screen-aguarda-revelacao'),
+  revelacao: document.getElementById('screen-revelacao'),
+  final: document.getElementById('screen-final'),
+};
+function showScreen(nomeEcra) {
+  Object.values(screens).forEach(s => s.classList.remove('active'));
+  screens[nomeEcra].classList.add('active');
+}
+
+document.getElementById('btn-entrar').addEventListener('click', entrar);
+document.querySelectorAll('.opcao').forEach(btn => {
+  btn.addEventListener('click', () => responder(parseInt(btn.dataset.i)));
+});
+
+async function entrar() {
+  const pinValor = document.getElementById('input-pin').value.trim();
+  const nomeValor = document.getElementById('input-nome').value.trim();
+  const erroEl = document.getElementById('entrar-erro');
+  erroEl.textContent = '';
+
+  if (!/^\d{4}$/.test(pinValor)) { erroEl.textContent = 'O código tem 4 números.'; return; }
+  if (!nomeValor) { erroEl.textContent = 'Escreve o teu nome.'; return; }
+
+  const res = await fetch(API.entrar, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pin: pinValor, nome: nomeValor }),
+  });
+  const data = await res.json();
+  if (!data.ok) { erroEl.textContent = data.erro || 'Não foi possível entrar.'; return; }
+
+  pin = pinValor;
+  jogadorId = data.jogadorId;
+  nome = data.nome;
+  document.getElementById('espera-nome').textContent = `Olá, ${nome}!`;
+  showScreen('espera');
+
+  clearInterval(pollTimer);
+  pollTimer = setInterval(atualizarEstado, 1000);
+  atualizarEstado();
+}
+
+async function responder(i) {
+  if (jaRespondiEstaPergunta) return;
+  jaRespondiEstaPergunta = true;
+  showScreen('aguardaRevelacao');
+  if (navigator.vibrate) navigator.vibrate(30);
+  await fetch(API.responder, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pin, jogadorId, perguntaIndice: perguntaAtualLocal, resposta: i }),
+  });
+}
+
+async function atualizarEstado() {
+  try {
+    const res = await fetch(`${API.estado}?pin=${pin}&papel=jogador&jogadorId=${jogadorId}`);
+    const data = await res.json();
+    if (!data.ok) return;
+    render(data);
+  } catch {}
+}
+
+function render(data) {
+  if (data.perguntaAtual !== perguntaAtualLocal) {
+    perguntaAtualLocal = data.perguntaAtual;
+    jaRespondiEstaPergunta = false;
+  }
+
+  if (data.fase === 'lobby') {
+    showScreen('espera');
+    document.getElementById('espera-pontos').textContent = `${data.meusPontos || 0} pontos`;
+    return;
+  }
+
+  if (data.fase === 'pergunta') {
+    if (data.jaRespondeu) {
+      showScreen('aguardaRevelacao');
+    } else {
+      document.querySelectorAll('.opcao').forEach(b => b.disabled = false);
+      showScreen('responder');
+    }
+    return;
+  }
+
+  if (data.fase === 'revelacao') {
+    const acertou = data.jaRespondeu && data.respostaDada === data.correta;
+    document.getElementById('rev-emoji').textContent = data.jaRespondeu ? (acertou ? '🎉' : '😅') : '⏰';
+    document.getElementById('rev-titulo').textContent = data.jaRespondeu
+      ? (acertou ? 'Acertaste!' : 'Não foi desta vez.')
+      : 'Não respondeste a tempo.';
+    document.getElementById('rev-pontos').textContent = acertou ? `+${data.pontosGanhos} pontos` : `${data.meusPontos || 0} pontos ao todo`;
+    showScreen('revelacao');
+    return;
+  }
+
+  if (data.fase === 'final') {
+    clearInterval(pollTimer);
+    document.getElementById('final-pontos').textContent = `${data.meusPontos || 0} pontos`;
+    document.getElementById('leaderboard-final').innerHTML = data.jogadores.map((j, idx) => `
+      <div class="lb-row">
+        <span class="lb-pos">${idx + 1}º</span>
+        <span class="lb-nome">${j.nome}</span>
+        <span>${j.pontos} pts</span>
+      </div>`).join('');
+    showScreen('final');
+  }
+}
+</script>
+</body>
+</html>

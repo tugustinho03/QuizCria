@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BadaQuiz — Ecrã da Sala</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-start: #0e1526; --bg-mid: #16213f; --bg-end: #1b2947;
+  --ans-a-bg: #c94a52; --ans-b-bg: #3568b0; --ans-c-bg: #c98a2e; --ans-d-bg: #3d8767;
+  --white: #ffffff; --white-card: #fbfaf7;
+  --text-dark: #171d2e; --text-mid: #5c6478; --star: #e3a53d;
+  --font: 'Manrope', sans-serif; --font-serif: 'Fraunces', serif;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  min-height: 100vh; font-family: var(--font); color: var(--white);
+  background:
+    radial-gradient(circle at 12% -10%, rgba(227,165,61,0.10), transparent 40%),
+    radial-gradient(circle at 100% 110%, rgba(53,104,176,0.16), transparent 45%),
+    linear-gradient(160deg, var(--bg-start) 0%, var(--bg-mid) 55%, var(--bg-end) 100%);
+  display: flex; align-items: center; justify-content: center;
+  padding: 32px 24px;
+}
+.wrap { width: 100%; max-width: 1000px; text-align: center; }
+.eyebrow { font-size: 15px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--star); margin-bottom: 14px; }
+h1 { font-family: var(--font-serif); font-style: italic; font-weight: 600; font-size: clamp(28px, 4vw, 44px); margin-bottom: 22px; }
+.card { background: var(--white-card); color: var(--text-dark); border-radius: 22px; padding: 40px; box-shadow: 0 24px 70px rgba(0,0,0,0.4); }
+.pin-box { display: inline-block; background: var(--text-dark); color: var(--white); font-family: var(--font-serif); font-size: clamp(48px, 10vw, 96px); font-weight: 600; letter-spacing: .12em; padding: 10px 40px; border-radius: 18px; margin: 10px 0 24px; }
+.hint { color: var(--text-mid); font-size: 16px; font-weight: 600; margin-bottom: 28px; }
+.hint b { color: var(--text-dark); }
+#lista-jogadores { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; min-height: 44px; margin-bottom: 30px; }
+.jogador-chip { background: rgba(23,29,46,0.06); border: 1px solid rgba(23,29,46,0.12); padding: 8px 18px; border-radius: 999px; font-weight: 700; font-size: 15px; animation: pop .3s ease both; }
+@keyframes pop { from { opacity: 0; transform: scale(.7); } to { opacity: 1; transform: scale(1); } }
+button { font-family: var(--font); font-weight: 700; border: none; cursor: pointer; border-radius: 12px; transition: transform .12s, filter .15s; }
+button:active { transform: scale(.97); }
+.btn-primary { background: var(--star); color: var(--text-dark); font-size: 18px; padding: 16px 46px; box-shadow: 0 8px 22px rgba(227,165,61,0.35); }
+.btn-primary:disabled { opacity: .4; cursor: default; }
+.btn-primary:hover:not(:disabled) { filter: brightness(1.05); }
+.btn-ghost { background: transparent; color: var(--white); border: 1.5px solid rgba(255,255,255,.3); font-size: 15px; padding: 13px 28px; }
+
+/* ---- Ecrã de pergunta ---- */
+.q-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-weight: 700; color: rgba(255,255,255,.75); font-size: 15px; }
+.timer-wrap { height: 10px; background: rgba(255,255,255,.15); border-radius: 999px; overflow: hidden; margin-bottom: 30px; }
+.timer-bar { height: 100%; background: linear-gradient(90deg, var(--ans-b-bg), var(--star)); border-radius: 999px; transition: width .2s linear; }
+.pergunta-texto { font-family: var(--font-serif); font-weight: 600; font-size: clamp(26px, 4.2vw, 42px); line-height: 1.3; margin-bottom: 34px; }
+.opcoes { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.opcao { border-radius: 16px; padding: 26px 22px; font-size: clamp(18px, 2.6vw, 24px); font-weight: 700; text-align: left; color: var(--white); box-shadow: 0 6px 20px rgba(0,0,0,0.25); transition: filter .3s, box-shadow .3s; }
+.opcao:nth-child(1) { background: var(--ans-a-bg); }
+.opcao:nth-child(2) { background: var(--ans-b-bg); }
+.opcao:nth-child(3) { background: var(--ans-c-bg); color: var(--text-dark); }
+.opcao:nth-child(4) { background: var(--ans-d-bg); }
+.opcao.certa { box-shadow: 0 0 0 5px #3d8767, 0 6px 20px rgba(0,0,0,0.25); filter: brightness(1.1); }
+.opcao.errada { filter: brightness(.5) saturate(.4); }
+.respostas-status { margin-top: 26px; font-weight: 700; color: rgba(255,255,255,.7); }
+
+/* ---- Leaderboard ---- */
+.leaderboard { display: flex; flex-direction: column; gap: 10px; max-width: 640px; margin: 0 auto; }
+.lb-row { display: flex; align-items: center; gap: 14px; background: var(--white-card); color: var(--text-dark); border-radius: 14px; padding: 14px 22px; font-weight: 700; box-shadow: 0 4px 16px rgba(0,0,0,0.18); }
+.lb-pos { width: 34px; font-size: 18px; font-weight: 800; color: var(--text-mid); text-align: center; }
+.lb-pos.p1 { color: #b4822a; font-size: 22px; }
+.lb-pos.p2 { color: #888; font-size: 20px; }
+.lb-pos.p3 { color: #9c6a4a; font-size: 19px; }
+.lb-nome { flex: 1; text-align: left; }
+.lb-pontos { color: var(--bg-end); }
+.screen { display: none; }
+.screen.active { display: block; animation: rise .4s ease both; }
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ECRÃ 1: criar sala -->
+  <section class="screen active" id="screen-criar">
+    <div class="eyebrow">BadaQuiz das Escolas · Ecrã da Sala</div>
+    <h1>Modo em grupo</h1>
+    <div class="card">
+      <p class="hint" style="margin-bottom:22px">Liga este ecrã a uma TV ou projetor. As crianças respondem pelo telemóvel delas.</p>
+      <button class="btn-primary" id="btn-criar">Criar Sala</button>
+    </div>
+  </section>
+
+  <!-- ECRÃ 2: lobby (à espera de jogadores) -->
+  <section class="screen" id="screen-lobby">
+    <div class="eyebrow">Entrem em badaquiz.vercel.app/jogar</div>
+    <h1>Código da sala</h1>
+    <div class="card">
+      <div class="pin-box" id="pin-lobby">----</div>
+      <div class="hint">Cada criança entra com o seu telemóvel e este código. <b>A pergunta aparece aqui, não no telemóvel.</b></div>
+      <div id="lista-jogadores"></div>
+      <button class="btn-primary" id="btn-iniciar" disabled>Iniciar Jogo</button>
+    </div>
+  </section>
+
+  <!-- ECRÃ 3: pergunta -->
+  <section class="screen" id="screen-pergunta">
+    <div class="q-top">
+      <span id="q-progresso">Pergunta 1 / 6</span>
+      <span id="q-respostas">0 / 0 responderam</span>
+    </div>
+    <div class="timer-wrap"><div class="timer-bar" id="timer-bar"></div></div>
+    <div class="pergunta-texto" id="q-texto">A carregar...</div>
+    <div class="opcoes" id="q-opcoes"></div>
+  </section>
+
+  <!-- ECRÃ 4: final -->
+  <section class="screen" id="screen-final">
+    <div class="eyebrow">Fim de Jogo</div>
+    <h1>Classificação Final</h1>
+    <div class="leaderboard" id="leaderboard-final"></div>
+    <div style="margin-top:28px">
+      <button class="btn-ghost" id="btn-nova-sala">Criar Nova Sala</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+const API = {
+  criar: '/api/sala-criar',
+  iniciar: '/api/sala-iniciar',
+  estado: '/api/sala-estado',
+};
+const SHAPES = ['▲', '◆', '●', '■'];
+
+let pin = null;
+let pollTimer = null;
+let faseAtual = null;
+
+const screens = {
+  criar: document.getElementById('screen-criar'),
+  lobby: document.getElementById('screen-lobby'),
+  pergunta: document.getElementById('screen-pergunta'),
+  final: document.getElementById('screen-final'),
+};
+function showScreen(nome) {
+  Object.values(screens).forEach(s => s.classList.remove('active'));
+  screens[nome].classList.add('active');
+}
+
+document.getElementById('btn-criar').addEventListener('click', criarSala);
+document.getElementById('btn-iniciar').addEventListener('click', iniciarJogo);
+document.getElementById('btn-nova-sala').addEventListener('click', () => location.reload());
+
+async function criarSala() {
+  const res = await fetch(API.criar, { method: 'POST' });
+  const data = await res.json();
+  if (!data.ok) { alert(data.erro || 'Erro ao criar sala.'); return; }
+  pin = data.pin;
+  document.getElementById('pin-lobby').textContent = pin;
+  showScreen('lobby');
+  clearInterval(pollTimer);
+  pollTimer = setInterval(atualizarEstado, 1200);
+  atualizarEstado();
+}
+
+async function iniciarJogo() {
+  await fetch(API.iniciar, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pin }),
+  });
+}
+
+async function atualizarEstado() {
+  try {
+    const res = await fetch(`${API.estado}?pin=${pin}&papel=tv`);
+    const data = await res.json();
+    if (!data.ok) return;
+    render(data);
+  } catch {}
+}
+
+function render(data) {
+  faseAtual = data.fase;
+
+  if (data.fase === 'lobby') {
+    showScreen('lobby');
+    document.getElementById('btn-iniciar').disabled = data.jogadores.length === 0;
+    document.getElementById('lista-jogadores').innerHTML = data.jogadores
+      .map(j => `<div class="jogador-chip">${j.nome}</div>`).join('');
+    return;
+  }
+
+  if (data.fase === 'pergunta' || data.fase === 'revelacao') {
+    showScreen('pergunta');
+    document.getElementById('q-progresso').textContent = `Pergunta ${data.perguntaAtual + 1} / ${data.totalPerguntas}`;
+    document.getElementById('q-respostas').textContent = `${data.numRespostas} / ${data.jogadores.length} responderam`;
+    document.getElementById('q-texto').textContent = data.pergunta || '';
+
+    const pct = Math.max(0, (data.tempoRestanteMs / data.tempoTotalMs) * 100);
+    document.getElementById('timer-bar').style.width = pct + '%';
+
+    const opcoesEl = document.getElementById('q-opcoes');
+    opcoesEl.innerHTML = (data.opcoes || []).map((op, i) => {
+      let cls = 'opcao';
+      if (data.fase === 'revelacao') {
+        cls += i === data.correta ? ' certa' : ' errada';
+      }
+      return `<div class="${cls}">${SHAPES[i]}&nbsp;&nbsp;${op}</div>`;
+    }).join('');
+    return;
+  }
+
+  if (data.fase === 'final') {
+    showScreen('final');
+    clearInterval(pollTimer);
+    const medals = ['p1', 'p2', 'p3'];
+    document.getElementById('leaderboard-final').innerHTML = data.jogadores.map((j, idx) => `
+      <div class="lb-row">
+        <span class="lb-pos ${medals[idx] || ''}">${idx + 1}º</span>
+        <span class="lb-nome">${j.nome}</span>
+        <span class="lb-pontos">${j.pontos} pts</span>
+      </div>`).join('');
+  }
+}
+</script>
+</body>
+</html>
