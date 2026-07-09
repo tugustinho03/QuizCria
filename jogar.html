@@ -317,7 +317,11 @@ function render(data) {
   }
 
   if (data.fase === 'pergunta') {
-    if (data.jaRespondeu) {
+    // Confia também na flag local: se já clicámos numa resposta mas o servidor
+    // ainda não confirmou (por causa do intervalo de 1s entre polls), continua
+    // a mostrar o ecrã de espera em vez de voltar a mostrar os botões — evita
+    // o "bug" de o ecrã voltar atrás e o clique deixar de fazer nada.
+    if (jaRespondiEstaPergunta || data.jaRespondeu) {
       showScreen('aguardaRevelacao');
     } else {
       document.querySelectorAll('.opcao').forEach(b => b.disabled = false);
