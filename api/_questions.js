@@ -11,7 +11,7 @@ export const QUESTIONS = [
 
 
 
-export const TIME_PER_QUESTION_MS = 10000; // 10s por pergunta — ritmo mais rápido, estilo Kahoot
+export const TIME_PER_QUESTION_MS = 12000; // 12s por pergunta
 export const REVEAL_DURATION_MS = 4000;    // revelação mais curta e dinâmica
 export const PLACAR_DURATION_MS = 4500;    // ecrã de classificação em tempo real entre perguntas
 export const MAX_POINTS = 1000;
